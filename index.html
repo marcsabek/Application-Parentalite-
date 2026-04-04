@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a2744">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Libéral(e) & Parent — Simulateur de prestations parentalité pour chirurgiens-dentistes libéraux — CDS+">
+<title>Libéral(e) & Parent — Guide 2026</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'DM Sans', sans-serif; background: #faf7f2; overflow-x: hidden; }
+  input, select, button { font-family: inherit; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+  @media print {
+    body { background: #fff !important; }
+    .no-print { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+// ═══ CONSTANTS ═══
+const PASS = 48060, PMSS = 4005, IJ_JOUR = 65.84, IJ_CARCDSF = 113.22, IJ_PLAFOND = 197.51;
+const BRAND = {
+  name: "CDS+",
+  addr: "54 rue Ampère — 75017 Paris",
+  email: "contact@cdservicesplus.com",
+  full: "CDS+ — 54 rue Ampère, 75017 Paris",
+};
+const C = {
+  navy:"#1a2744", coral:"#e85d4a", sage:"#7a9e7e", gold:"#d4a843",
+  cream:"#faf7f2", slate:"#4a5568", slateL:"#718096", blush:"#f5e6e0",
+  sky:"#dbe9f4", lav:"#e8e0f0"
+};
+
+// ═══ PDF EXPORT ═══
+function exportPDF(results, params) {
+  const w = window.open('', '_blank');
+  if (!w) { alert("Autorisez les pop-ups pour exporter en PDF."); return; }
+  const rows = results.details.map(d =>
+    `<tr><td style="padding:10px 14px;border-bottom:1px solid #eee;font-size:13px">${d.label}<br><span style="color:#999;font-size:11px">${d.note}</span></td><td style="padding:10px 14px;border-bottom:1px solid #eee;text-align:right;font-weight:700;color:#e85d4a;font-size:15px;white-space:nowrap">${d.montant.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</td></tr>`
+  ).join('');
+
+  const sitLabel = {maternite:"Maternité",paternite:"Paternité",adoption:"Adoption"}[params.situation];
+  const statutLabel = params.statut==="titulaire"?"Titulaire":"Collaborateur libéral";
+  const naissLabel = params.naissanceType==="simple"?"Naissance simple":"Naissances multiples";
+
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8"><title>Libéral(e) & Parent — Estimation 2026</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Playfair+Display:wght@700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:'DM Sans',sans-serif;color:#333;padding:40px;max-width:700px;margin:0 auto}
+  @media print{body{padding:20px}@page{margin:15mm}}
+</style></head><body>
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:8px">
+  <div style="width:44px;height:44px;border-radius:12px;background:#1a2744;display:flex;align-items:center;justify-content:center;font-size:22px">👶</div>
+  <div>
+    <h1 style="font-family:'Playfair Display',serif;font-size:22px;color:#1a2744;margin:0">Libéral(e) & Parent</h1>
+    <p style="font-size:12px;color:#999;margin:0">Estimation personnalisée — Parentalité du chirurgien-dentiste libéral — 2026</p>
+  </div>
+</div>
+<hr style="border:none;border-top:3px solid #e85d4a;margin:16px 0 24px">
+
+<table style="width:100%;margin-bottom:20px;font-size:13px;border-collapse:collapse">
+<tr><td style="padding:6px 0;color:#718096">Situation</td><td style="padding:6px 0;font-weight:600;text-align:right">${sitLabel}</td></tr>
+<tr><td style="padding:6px 0;color:#718096">Statut</td><td style="padding:6px 0;font-weight:600;text-align:right">${statutLabel}</td></tr>
+<tr><td style="padding:6px 0;color:#718096">Type de naissance</td><td style="padding:6px 0;font-weight:600;text-align:right">${naissLabel}</td></tr>
+<tr><td style="padding:6px 0;color:#718096">Revenu annuel moyen</td><td style="padding:6px 0;font-weight:600;text-align:right">${params.revenuMoyen.toLocaleString('fr-FR')} €</td></tr>
+</table>
+
+<h2 style="font-size:15px;color:#1a2744;margin-bottom:12px;font-family:'Playfair Display',serif">Détail des prestations</h2>
+<table style="width:100%;border-collapse:collapse;margin-bottom:20px">${rows}</table>
+
+<div style="background:#f5e6e0;border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+  <span style="font-weight:700;font-size:15px;color:#1a2744">Total estimé</span>
+  <span style="font-weight:800;font-size:22px;color:#e85d4a">${results.totalEstime.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</span>
+</div>
+
+<h2 style="font-size:15px;color:#1a2744;margin-bottom:12px;font-family:'Playfair Display',serif">Indemnités complémentaires (pour information)</h2>
+<table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+<tr><td style="padding:8px 14px;background:#dbe9f4;border-radius:6px 0 0 6px;font-size:12px">IJ maladie CPAM (j4→j90)</td><td style="padding:8px 14px;background:#dbe9f4;border-radius:0 6px 6px 0;text-align:right;font-weight:700;font-size:14px">${results.ijMaladieJour.toLocaleString('fr-FR',{minimumFractionDigits:2})} €/j</td></tr>
+<tr><td colspan="2" style="padding:3px"></td></tr>
+<tr><td style="padding:8px 14px;background:#e8e0f0;border-radius:6px 0 0 6px;font-size:12px">IJ CARCDSF (à partir du j91)</td><td style="padding:8px 14px;background:#e8e0f0;border-radius:0 6px 6px 0;text-align:right;font-weight:700;font-size:14px">${IJ_CARCDSF} €/j</td></tr>
+</table>
+
+<div style="border-top:1px solid #eee;padding-top:16px;font-size:11px;color:#999;line-height:1.6">
+  <p><strong>Sources :</strong> PMSS 2026 (arrêté du 22/12/2025). IJ CARCDSF barème 2026. LFSS 2026 art. 99 (congé supplémentaire — décrets à paraître).</p>
+  <p style="margin-top:6px"><strong>${BRAND.name}</strong> — ${BRAND.email} — ${BRAND.addr}</p>
+  <p style="margin-top:6px;font-style:italic">Estimation indicative générée le ${new Date().toLocaleDateString('fr-FR')}. Ne se substitue pas à un conseil personnalisé.</p>
+</div>
+</body></html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 600);
+}
+
+// ═══ UI HELPERS ═══
+function FadeIn({children, delay=0}) {
+  const [v,setV]=useState(false);
+  useEffect(()=>{const t=setTimeout(()=>setV(true),delay);return()=>clearTimeout(t)},[delay]);
+  return React.createElement('div',{style:{opacity:v?1:0,transform:v?'translateY(0)':'translateY(16px)',transition:'opacity .45s ease,transform .45s ease'}},children);
+}
+function Card({children,accent,style={}}) {
+  return React.createElement('div',{style:{background:'#fff',borderRadius:16,padding:'24px 24px',boxShadow:'0 2px 14px rgba(26,39,68,.06)',borderLeft:accent?`4px solid ${accent}`:'none',...style}},children);
+}
+function Badge({children,color=C.coral}) {
+  return React.createElement('span',{style:{display:'inline-block',background:color,color:'#fff',fontSize:11,fontWeight:700,letterSpacing:.5,padding:'3px 10px',borderRadius:20,textTransform:'uppercase'}},children);
+}
+function Sel({label,value,onChange,options}) {
+  return React.createElement('div',{style:{marginBottom:16}},
+    React.createElement('label',{style:{display:'block',fontSize:13,fontWeight:600,color:C.navy,marginBottom:5}},label),
+    React.createElement('select',{value,onChange:e=>onChange(e.target.value),style:{width:'100%',padding:'10px 14px',borderRadius:10,border:'1.5px solid #d6d9e0',fontSize:14,color:C.navy,background:'#fff',outline:'none',cursor:'pointer'}},
+      options.map(o=>React.createElement('option',{key:o.value,value:o.value},o.label))
+    )
+  );
+}
+function Num({label,value,onChange,suffix='',min=0}) {
+  return React.createElement('div',{style:{marginBottom:16}},
+    React.createElement('label',{style:{display:'block',fontSize:13,fontWeight:600,color:C.navy,marginBottom:5}},label),
+    React.createElement('div',{style:{position:'relative'}},
+      React.createElement('input',{type:'number',value,min,onChange:e=>onChange(Number(e.target.value)),style:{width:'100%',padding:'10px 14px',paddingRight:suffix?40:14,borderRadius:10,border:'1.5px solid #d6d9e0',fontSize:14,color:C.navy,background:'#fff',outline:'none',boxSizing:'border-box'}}),
+      suffix&&React.createElement('span',{style:{position:'absolute',right:14,top:'50%',transform:'translateY(-50%)',fontSize:13,color:C.slateL,fontWeight:600}},suffix)
+    )
+  );
+}
+
+// ═══ SIMULATEUR ═══
+function Simulateur() {
+  const [sit,setSit]=useState('maternite');
+  const [stat,setStat]=useState('titulaire');
+  const [nType,setNType]=useState('simple');
+  const [rev,setRev]=useState(80000);
+  const [dur,setDur]=useState(16);
+
+  const calc=()=>{
+    const r={details:[],totalEstime:0,ijMaladieJour:0,ijCARCDSFJour:IJ_CARCDSF};
+    if(sit==='maternite'){
+      r.details.push({label:'Allocation forfaitaire de repos maternel',montant:PMSS,note:`1 PMSS = ${PMSS.toLocaleString('fr-FR')} €`});
+      const sem=dur>=16?16:8,j=sem*7;
+      r.details.push({label:`IJ forfaitaire de repos maternel (${sem} sem.)`,montant:j*IJ_JOUR,note:`${IJ_JOUR} €/j × ${j} j`});
+      r.totalEstime=PMSS+j*IJ_JOUR;
+    } else if(sit==='paternite'){
+      const j=nType==='simple'?25:32;
+      r.details.push({label:`IJ paternité (${j} jours)`,montant:j*IJ_JOUR,note:`${IJ_JOUR} €/j × ${j} j`});
+      r.totalEstime=j*IJ_JOUR;
+    } else {
+      r.details.push({label:'Allocation forfaitaire (adoption)',montant:PMSS/2,note:`½ PMSS = ${(PMSS/2).toLocaleString('fr-FR')} €`});
+      const j=nType==='simple'?84:273;
+      r.details.push({label:`IJ adoption (${j} j max.)`,montant:j*IJ_JOUR,note:`${IJ_JOUR} €/j × ${j} j`});
+      r.totalEstime=PMSS/2+j*IJ_JOUR;
+    }
+    r.ijMaladieJour=Math.min(Math.round(Math.min(rev,3*PASS)/730*100)/100,IJ_PLAFOND);
+    return r;
+  };
+  const r=calc();
+  const handleExport=()=>exportPDF(r,{situation:sit,statut:stat,naissanceType:nType,revenuMoyen:rev});
+
+  return React.createElement('div',null,
+    React.createElement(FadeIn,null,
+      React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:16}},
+        React.createElement(Sel,{label:'Situation',value:sit,onChange:setSit,options:[{value:'maternite',label:'Maternité'},{value:'paternite',label:'Paternité'},{value:'adoption',label:'Adoption'}]}),
+        React.createElement(Sel,{label:'Statut',value:stat,onChange:setStat,options:[{value:'titulaire',label:'Titulaire'},{value:'collaborateur',label:'Collaborateur libéral'}]}),
+        React.createElement(Sel,{label:'Type de naissance',value:nType,onChange:setNType,options:[{value:'simple',label:'Naissance simple'},{value:'multiple',label:'Naissances multiples'}]}),
+        sit==='maternite'&&React.createElement(Sel,{label:"Durée d'arrêt",value:String(dur),onChange:v=>setDur(Number(v)),options:[{value:'8',label:'8 semaines (minimum)'},{value:'16',label:'16 semaines'}]})
+      )
+    ),
+    React.createElement(FadeIn,{delay:80},React.createElement(Num,{label:'Revenu annuel moyen (3 dernières années)',value:rev,onChange:setRev,suffix:'€'})),
+    React.createElement(FadeIn,{delay:160},
+      React.createElement(Card,{accent:C.coral,style:{marginBottom:18}},
+        React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}},
+          React.createElement('h3',{style:{margin:0,fontSize:16,color:C.navy,fontFamily:"'Playfair Display',serif"}},'Estimation des prestations'),
+          React.createElement(Badge,null,'2026')
+        ),
+        r.details.map((d,i)=>React.createElement('div',{key:i,style:{display:'flex',justifyContent:'space-between',alignItems:'flex-start',padding:'11px 0',borderBottom:i<r.details.length-1?'1px solid #eef0f4':'none'}},
+          React.createElement('div',null,
+            React.createElement('div',{style:{fontSize:14,color:C.navy,fontWeight:500}},d.label),
+            React.createElement('div',{style:{fontSize:12,color:C.slateL,marginTop:2}},d.note)
+          ),
+          React.createElement('div',{style:{fontSize:18,fontWeight:700,color:C.coral,whiteSpace:'nowrap',marginLeft:14}},d.montant.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €')
+        )),
+        React.createElement('div',{style:{marginTop:16,padding:'13px 16px',background:C.blush,borderRadius:12,display:'flex',justifyContent:'space-between',alignItems:'center'}},
+          React.createElement('span',{style:{fontSize:15,fontWeight:700,color:C.navy}},'Total estimé'),
+          React.createElement('span',{style:{fontSize:22,fontWeight:800,color:C.coral}},r.totalEstime.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €')
+        )
+      )
+    ),
+    React.createElement(FadeIn,{delay:240},
+      React.createElement(Card,{accent:C.sage,style:{marginBottom:18}},
+        React.createElement('h4',{style:{margin:'0 0 10px',fontSize:14,color:C.sage,textTransform:'uppercase',letterSpacing:.5}},'Informations complémentaires'),
+        React.createElement('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}},
+          React.createElement('div',{style:{padding:'11px 14px',background:C.sky,borderRadius:10}},
+            React.createElement('div',{style:{fontSize:11,color:C.slateL,fontWeight:600,textTransform:'uppercase',letterSpacing:.3}},'IJ maladie CPAM (j4→j90)'),
+            React.createElement('div',{style:{fontSize:18,fontWeight:700,color:C.navy,marginTop:3}},r.ijMaladieJour.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €/j')
+          ),
+          React.createElement('div',{style:{padding:'11px 14px',background:C.lav,borderRadius:10}},
+            React.createElement('div',{style:{fontSize:11,color:C.slateL,fontWeight:600,textTransform:'uppercase',letterSpacing:.3}},'IJ CARCDSF (à partir du j91)'),
+            React.createElement('div',{style:{fontSize:18,fontWeight:700,color:C.navy,marginTop:3}},IJ_CARCDSF+' €/j')
+          )
+        )
+      )
+    ),
+    React.createElement(FadeIn,{delay:300},
+      React.createElement('button',{onClick:handleExport,className:'no-print',style:{width:'100%',padding:'14px',borderRadius:12,border:'none',background:`linear-gradient(135deg,${C.coral},#d44a38)`,color:'#fff',fontSize:15,fontWeight:700,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:8,boxShadow:'0 4px 16px rgba(232,93,74,.25)'}},
+        '📄 Exporter en PDF'
+      )
+    )
+  );
+}
+
+// ═══ CHRONOLOGIE ═══
+function Chronologie() {
+  const [sit,setSit]=useState('maternite');
+  const data={
+    maternite:[
+      {p:'Avant 3 mois',t:'Déclaration de grossesse',d:'Premier examen prénatal. Déclaration à l\'Assurance maladie.',c:C.sage,i:'📋'},
+      {p:'Dès la déclaration',t:'Prise en charge frais médicaux',d:'100% du tarif de responsabilité (sauf 2 premières écho. à 70%).',c:C.sky,i:'🏥'},
+      {p:'7e mois',t:'1er versement allocation repos maternel',d:`½ PMSS = ${(PMSS/2).toLocaleString('fr-FR')} € au début de l'arrêt.`,c:C.coral,i:'💶'},
+      {p:'Début arrêt (min. 8 sem.)',t:'IJ forfaitaire de repos maternel',d:`${IJ_JOUR} €/jour. Cessation d'activité obligatoire.`,c:C.gold,i:'⏸️'},
+      {p:'Accouchement',t:'Naissance',d:'Prise en charge des frais d\'accouchement et de séjour.',c:C.coral,i:'👶',h:true},
+      {p:'Après 8 sem. d\'arrêt',t:'2e versement allocation repos',d:`Solde : ${(PMSS/2).toLocaleString('fr-FR')} €.`,c:C.coral,i:'💶'},
+      {p:'Jusqu\'à J+12',t:'Couverture post-accouchement',d:'Prise en charge à 100% jusqu\'à 12 jours après l\'accouchement.',c:C.sage,i:'🩺'},
+      {p:'À partir du 1er juil. 2026',t:'Congé supplémentaire (LFSS 2026)',d:'1 à 2 mois supplémentaires pour chaque parent. Décrets en attente.',c:C.navy,i:'🆕'},
+    ],
+    paternite:[
+      {p:'Jour de la naissance',t:'Congé obligatoire (7 jours)',d:'Doit débuter le jour de la naissance. Cessation totale.',c:C.coral,i:'👶',h:true},
+      {p:'Dans les 6 mois',t:'Congé facultatif (18 ou 25 j)',d:'Fractionnable en 3 parties (min. 5 j chacune).',c:C.gold,i:'📅'},
+      {p:'Pendant le congé',t:'Indemnité journalière',d:`${IJ_JOUR} €/j sans obligation de remplacement.`,c:C.sage,i:'💶'},
+      {p:'À partir du 1er juil. 2026',t:'Congé supplémentaire (LFSS 2026)',d:'1 à 2 mois supplémentaires indemnisés.',c:C.navy,i:'🆕'},
+    ],
+    adoption:[
+      {p:'Arrivée de l\'enfant',t:'Allocation forfaitaire',d:`½ PMSS = ${(PMSS/2).toLocaleString('fr-FR')} €. Versée sur demande.`,c:C.coral,i:'💶'},
+      {p:'Pendant le congé',t:'Congé d\'adoption (84 à 273 j)',d:'Durée variable selon type d\'adoption et situation familiale.',c:C.gold,i:'📅'},
+      {p:'Pendant le congé',t:'IJ forfaitaires',d:`${IJ_JOUR} €/j avec cessation totale d'activité.`,c:C.sage,i:'💶'},
+      {p:'Partage possible',t:'Rallongement si partagé',d:'+25 j (1 enfant) ou +32 j (plusieurs) si les deux conjoints partagent.',c:C.navy,i:'👥'},
+    ]
+  };
+  const items=data[sit]||[];
+  return React.createElement('div',null,
+    React.createElement(FadeIn,null,
+      React.createElement('div',{style:{display:'flex',gap:8,marginBottom:22}},
+        ['maternite','paternite','adoption'].map(s=>
+          React.createElement('button',{key:s,onClick:()=>setSit(s),style:{flex:1,padding:'10px 12px',borderRadius:10,border:'none',background:sit===s?C.navy:'#eef0f4',color:sit===s?'#fff':C.slate,fontWeight:600,fontSize:13,cursor:'pointer',transition:'all .2s'}},
+            s==='maternite'?'Maternité':s==='paternite'?'Paternité':'Adoption'
+          )
+        )
+      )
+    ),
+    React.createElement('div',{style:{position:'relative',paddingLeft:28}},
+      React.createElement('div',{style:{position:'absolute',left:10,top:8,bottom:8,width:2,background:`linear-gradient(to bottom,${C.coral},${C.sage})`,borderRadius:2}}),
+      items.map((it,i)=>React.createElement(FadeIn,{key:sit+i,delay:i*70},
+        React.createElement('div',{style:{position:'relative',marginBottom:16}},
+          React.createElement('div',{style:{position:'absolute',left:-24,top:14,width:14,height:14,borderRadius:'50%',background:it.h?C.coral:'#fff',border:`3px solid ${it.h?C.coral:C.slateL}`,zIndex:1}}),
+          React.createElement(Card,{style:{padding:'14px 16px',border:it.h?`2px solid ${C.coral}`:'1px solid #eef0f4'}},
+            React.createElement('div',{style:{display:'flex',alignItems:'center',gap:7,marginBottom:5}},
+              React.createElement('span',{style:{fontSize:17}},it.i),
+              React.createElement(Badge,{color:it.c},it.p)
+            ),
+            React.createElement('div',{style:{fontSize:14,fontWeight:700,color:C.navy,marginBottom:3,fontFamily:"'Playfair Display',serif"}},it.t),
+            React.createElement('div',{style:{fontSize:13,color:C.slate,lineHeight:1.5}},it.d)
+          )
+        )
+      ))
+    )
+  );
+}
+
+// ═══ DEMARCHES ═══
+function Demarches() {
+  const [chk,setChk]=useState({});
+  const tog=id=>setChk(p=>({...p,[id]:!p[id]}));
+  const secs=[
+    {title:'Maternité — Démarches essentielles',color:C.coral,items:[
+      {id:'m1',text:'Effectuer le 1er examen prénatal avant la fin du 3e mois',dl:'Avant 3 mois'},
+      {id:'m2',text:'Déclaration de grossesse à l\'Assurance maladie',dl:'Avant 14 semaines'},
+      {id:'m3',text:'Demande d\'allocation de repos maternel à la CPAM',dl:'Début de l\'arrêt'},
+      {id:'m4',text:'Certificat médical + déclaration sur l\'honneur de cessation',dl:'Pour l\'IJ forfaitaire'},
+      {id:'m5',text:'Arrêt minimal de 8 semaines dont 6 après l\'accouchement',dl:'Obligatoire'},
+      {id:'m6',text:'Demander la dispense de cotisations RC à la CARCDSF',dl:'Année de l\'accouchement'},
+    ]},
+    {title:'Grossesse difficile',color:C.gold,items:[
+      {id:'g1',text:'Déclaration d\'arrêt de travail à la CPAM (IJ du 4e au 90e jour)',dl:'Sous 48h'},
+      {id:'g2',text:'Déclaration à la CARCDSF (IJ à partir du 91e jour)',dl:'Dans les 180 jours',imp:true},
+      {id:'g3',text:'Fournir le certificat médical avec date et durée prévue',dl:'Avec la déclaration CARCDSF'},
+    ]},
+    {title:'Paternité',color:C.sage,items:[
+      {id:'p1',text:'Justificatif de filiation (acte de naissance, livret de famille…)',dl:'Pour la demande CPAM'},
+      {id:'p2',text:'Attestation sur l\'honneur d\'interruption effective d\'activité',dl:'Obligatoire'},
+      {id:'p3',text:'Commencer le congé obligatoire de 7 jours le jour de la naissance',dl:'Jour J',imp:true},
+      {id:'p4',text:'Prendre le congé facultatif dans les 6 mois',dl:'6 mois max'},
+    ]},
+    {title:'Cessation volontaire après maternité/adoption',color:C.navy,items:[
+      {id:'c1',text:'Demander le maintien d\'inscription au tableau de l\'Ordre',dl:'Si cessation'},
+      {id:'c2',text:'Choisir : radiation ou adhésion volontaire CARCDSF',dl:'Dès la cessation'},
+      {id:'c3',text:'Maintien prévoyance : demande dans les 3 mois (invalidité-décès, max 3 ans)',dl:'3 mois max',imp:true},
+    ]},
+  ];
+  const total=secs.reduce((s,sec)=>s+sec.items.length,0);
+  const done=Object.values(chk).filter(Boolean).length;
+
+  return React.createElement('div',null,
+    React.createElement(FadeIn,null,
+      React.createElement('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}},
+        React.createElement('span',{style:{fontSize:13,color:C.slateL}},'Progression'),
+        React.createElement('span',{style:{fontSize:13,fontWeight:700,color:C.navy}},`${done}/${total}`)
+      ),
+      React.createElement('div',{style:{height:6,background:'#eef0f4',borderRadius:4,marginBottom:22,overflow:'hidden'}},
+        React.createElement('div',{style:{height:'100%',width:`${(done/total)*100}%`,background:`linear-gradient(90deg,${C.coral},${C.gold})`,borderRadius:4,transition:'width .4s'}})
+      )
+    ),
+    secs.map((sec,si)=>React.createElement(FadeIn,{key:si,delay:si*50},
+      React.createElement('div',{style:{marginBottom:20}},
+        React.createElement('h3',{style:{fontSize:15,fontWeight:700,color:sec.color,marginBottom:8,fontFamily:"'Playfair Display',serif"}},sec.title),
+        sec.items.map(it=>React.createElement('div',{key:it.id,onClick:()=>tog(it.id),style:{display:'flex',alignItems:'flex-start',gap:11,padding:'11px 13px',marginBottom:5,borderRadius:10,background:chk[it.id]?'#f0fdf0':'#fff',border:it.imp?`1.5px solid ${C.gold}`:'1px solid #eef0f4',cursor:'pointer',transition:'all .2s'}},
+          React.createElement('div',{style:{width:21,height:21,minWidth:21,borderRadius:6,border:chk[it.id]?`2px solid ${C.sage}`:'2px solid #ccc',background:chk[it.id]?C.sage:'transparent',display:'flex',alignItems:'center',justifyContent:'center',marginTop:1,transition:'all .2s'}},
+            chk[it.id]&&React.createElement('span',{style:{color:'#fff',fontSize:12,fontWeight:700}},'✓')
+          ),
+          React.createElement('div',{style:{flex:1}},
+            React.createElement('div',{style:{fontSize:13,color:chk[it.id]?C.slateL:C.navy,textDecoration:chk[it.id]?'line-through':'none',lineHeight:1.4}},it.text),
+            React.createElement('div',{style:{fontSize:11,color:it.imp?C.gold:C.slateL,fontWeight:it.imp?700:400,marginTop:2}},(it.imp?'⚠ ':'')+it.dl)
+          )
+        ))
+      )
+    ))
+  );
+}
+
+// ═══ COMPARATIF ═══
+function Comparatif() {
+  const rows=[
+    {th:'Congé maternité',ti:'Cessation min. 8 sem. (dont 6 après accouchement)',co:'Suspension contrat min. 16 sem. (peut être plus long)'},
+    {th:'Allocation repos maternel',ti:`${PMSS.toLocaleString('fr-FR')} € (1 PMSS)`,co:'Mêmes droits'},
+    {th:'IJ forfaitaire maternité',ti:`${IJ_JOUR} €/j`,co:'Mêmes indemnités'},
+    {th:'Protection contrat (maternité)',ti:'—',co:'Interdiction rupture dès déclaration grossesse → 8 sem. après reprise'},
+    {th:'Congé paternité',ti:'25 j (simple) / 32 j (multiples)',co:'Même durée'},
+    {th:'Protection contrat (paternité)',ti:'—',co:'Dès annonce intention de suspendre → fin + 8 sem.'},
+    {th:'Délai information paternité',ti:'—',co:'Au moins 1 mois avant (LRAR)'},
+    {th:'Congé adoption',ti:'84 à 273 jours selon situation',co:'16 sem. max, 18 si ≥3 enfants, 22 si multiples'},
+    {th:'Exception rupture',ti:'—',co:'Manquement grave déontologique ou raisons non liées à la grossesse'},
+  ];
+  return React.createElement('div',null,
+    React.createElement(FadeIn,null,
+      React.createElement('p',{style:{fontSize:13,color:C.slateL,marginBottom:16,lineHeight:1.5}},'Comparaison des droits titulaire vs collaborateur libéral.')
+    ),
+    rows.map((r,i)=>React.createElement(FadeIn,{key:i,delay:i*35},
+      React.createElement('div',{style:{marginBottom:8,borderRadius:12,overflow:'hidden',border:'1px solid #eef0f4'}},
+        React.createElement('div',{style:{padding:'9px 16px',background:C.navy,color:'#fff',fontSize:13,fontWeight:700,fontFamily:"'Playfair Display',serif"}},r.th),
+        React.createElement('div',{style:{display:'flex'}},
+          React.createElement('div',{style:{flex:1,padding:'10px 14px',borderRight:'1px solid #eef0f4',background:'#fff'}},
+            React.createElement('div',{style:{fontSize:10,color:C.coral,fontWeight:700,textTransform:'uppercase',letterSpacing:.5,marginBottom:3}},'Titulaire'),
+            React.createElement('div',{style:{fontSize:13,color:C.navy,lineHeight:1.4}},r.ti)
+          ),
+          React.createElement('div',{style:{flex:1,padding:'10px 14px',background:'#fff'}},
+            React.createElement('div',{style:{fontSize:10,color:C.sage,fontWeight:700,textTransform:'uppercase',letterSpacing:.5,marginBottom:3}},'Collaborateur'),
+            React.createElement('div',{style:{fontSize:13,color:C.navy,lineHeight:1.4}},r.co)
+          )
+        )
+      )
+    ))
+  );
+}
+
+// ═══ MONTANTS ═══
+function Montants() {
+  const data=[
+    {cat:'Références 2026',col:C.navy,rows:[['PASS (annuel)',`${PASS.toLocaleString('fr-FR')} €`],['PMSS (mensuel)',`${PMSS.toLocaleString('fr-FR')} €`]]},
+    {cat:'Maternité',col:C.coral,rows:[['Allocation repos maternel',`${PMSS.toLocaleString('fr-FR')} €`],['IJ forfaitaire (par jour)',`${IJ_JOUR} €`],['IJ — 8 semaines',`${(8*7*IJ_JOUR).toLocaleString('fr-FR',{minimumFractionDigits:2})} €`],['IJ — 16 semaines',`${(16*7*IJ_JOUR).toLocaleString('fr-FR',{minimumFractionDigits:2})} €`],['Bonification RBL','100 points']]},
+    {cat:'Grossesse difficile',col:C.gold,rows:[['IJ CPAM (j4→j90), plafond',`${IJ_PLAFOND} €/j`],['IJ CARCDSF (à partir du j91)',`${IJ_CARCDSF} €/j`],['Délai déclaration CARCDSF','180 jours max']]},
+    {cat:'Paternité',col:C.sage,rows:[['IJ par jour',`${IJ_JOUR} €`],['Total 18 jours',`${(18*IJ_JOUR).toLocaleString('fr-FR',{minimumFractionDigits:2})} €`],['Total 25 jours',`${(25*IJ_JOUR).toLocaleString('fr-FR',{minimumFractionDigits:2})} €`]]},
+    {cat:'Adoption',col:C.navy,rows:[['Allocation repos (adoption)',`${(PMSS/2).toLocaleString('fr-FR',{minimumFractionDigits:2})} €`],['IJ forfaitaire (par jour)',`${IJ_JOUR} €`]]},
+  ];
+  return React.createElement('div',null,
+    data.map((s,si)=>React.createElement(FadeIn,{key:si,delay:si*50},
+      React.createElement('div',{style:{marginBottom:18}},
+        React.createElement('h3',{style:{fontSize:14,fontWeight:700,color:s.col,marginBottom:7,textTransform:'uppercase',letterSpacing:.5}},s.cat),
+        React.createElement(Card,{style:{padding:0,overflow:'hidden'}},
+          s.rows.map(([l,v],ri)=>React.createElement('div',{key:ri,style:{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'11px 16px',borderBottom:ri<s.rows.length-1?'1px solid #f0f1f5':'none',background:ri%2===0?'#fff':'#fafbfc'}},
+            React.createElement('span',{style:{fontSize:13,color:C.navy,lineHeight:1.4}},l),
+            React.createElement('span',{style:{fontSize:14,fontWeight:700,color:s.col,whiteSpace:'nowrap',marginLeft:12}},v)
+          ))
+        )
+      )
+    )),
+    React.createElement(FadeIn,{delay:250},
+      React.createElement('div',{style:{padding:'13px 16px',background:C.blush,borderRadius:12,fontSize:12,color:C.slate,lineHeight:1.6}},
+        React.createElement('strong',null,'Sources : '),'PMSS 2026 (arrêté 22/12/2025). IJ CARCDSF barème 2026. LFSS 2026 art. 99.',
+        React.createElement('br'),
+        React.createElement('strong',null,'Contact : '),`${BRAND.name} — ${BRAND.email}`
+      )
+    )
+  );
+}
+
+// ═══ APP ═══
+const tabs=[
+  {id:'simulateur',label:'Simulateur',icon:'⚙️'},
+  {id:'chronologie',label:'Chronologie',icon:'📅'},
+  {id:'demarches',label:'Démarches',icon:'✓'},
+  {id:'comparatif',label:'Comparatif',icon:'⇌'},
+  {id:'montants',label:'Montants 2026',icon:'€'},
+];
+
+function App() {
+  const [tab,setTab]=useState('simulateur');
+  const [pwaReady,setPwa]=useState(false);
+  const [deferredPrompt,setDeferred]=useState(null);
+
+  useEffect(()=>{
+    if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js').catch(()=>{});}
+    window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();setDeferred(e);setPwa(true);});
+  },[]);
+
+  const installPWA=()=>{if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{setDeferred(null);setPwa(false);});}};
+
+  const content={simulateur:Simulateur,chronologie:Chronologie,demarches:Demarches,comparatif:Comparatif,montants:Montants};
+  const Comp=content[tab];
+
+  return React.createElement('div',{style:{minHeight:'100vh',background:`linear-gradient(135deg,${C.cream} 0%,#f0eee8 100%)`}},
+    // Header
+    React.createElement('div',{style:{background:C.navy,padding:'26px 22px 20px',position:'relative',overflow:'hidden'}},
+      React.createElement('div',{style:{position:'absolute',top:-40,right:-30,width:160,height:160,borderRadius:'50%',background:'rgba(232,93,74,.12)'}}),
+      React.createElement('div',{style:{position:'relative',zIndex:1}},
+        React.createElement('div',{style:{display:'flex',alignItems:'center',gap:10,marginBottom:6}},
+          React.createElement('div',{style:{width:36,height:36,borderRadius:10,background:C.coral,display:'flex',alignItems:'center',justifyContent:'center',fontSize:18}},'👶'),
+          React.createElement('div',{style:{flex:1}},
+            React.createElement('h1',{style:{margin:0,fontSize:19,fontWeight:800,color:'#fff',fontFamily:"'Playfair Display',serif",letterSpacing:-.3}},'Libéral(e) & Parent'),
+            React.createElement('p',{style:{margin:0,fontSize:11,color:'rgba(255,255,255,.55)'}},'Maternité · Paternité · Adoption — 2026')
+          ),
+          pwaReady&&React.createElement('button',{onClick:installPWA,className:'no-print',style:{padding:'7px 12px',borderRadius:8,border:'1.5px solid rgba(255,255,255,.3)',background:'transparent',color:'#fff',fontSize:11,fontWeight:600,cursor:'pointer'}},'📲 Installer')
+        ),
+        React.createElement('div',{style:{marginTop:5,display:'flex',alignItems:'center',gap:6}},
+          React.createElement('span',{style:{fontSize:10,color:'rgba(255,255,255,.4)',fontWeight:500}},BRAND.name),
+          React.createElement('span',{style:{fontSize:10,color:'rgba(255,255,255,.2)'}},'•'),
+          React.createElement('span',{style:{fontSize:10,color:'rgba(255,255,255,.4)',fontWeight:500}},BRAND.email)
+        )
+      )
+    ),
+    // Tabs
+    React.createElement('div',{className:'no-print',style:{display:'flex',overflowX:'auto',background:'#fff',borderBottom:'1px solid #eef0f4',padding:'0 4px',scrollbarWidth:'none'}},
+      tabs.map(t=>React.createElement('button',{key:t.id,onClick:()=>setTab(t.id),style:{flex:'0 0 auto',padding:'11px 13px 9px',border:'none',background:'transparent',cursor:'pointer',fontSize:12,fontWeight:tab===t.id?700:500,color:tab===t.id?C.coral:C.slateL,borderBottom:tab===t.id?`2.5px solid ${C.coral}`:'2.5px solid transparent',transition:'all .2s',whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:5}},
+        React.createElement('span',{style:{fontSize:14}},t.icon),t.label
+      ))
+    ),
+    // Content
+    React.createElement('div',{style:{padding:'18px 16px 28px',maxWidth:640,margin:'0 auto'}},React.createElement(Comp)),
+    // Footer
+    React.createElement('div',{style:{textAlign:'center',padding:'14px 16px 22px',fontSize:11,color:C.slateL,lineHeight:1.5}},
+      `${BRAND.name} — ${BRAND.addr}`,
+      React.createElement('br'),
+      `${BRAND.email} · © CDS+ 2026`,
+      React.createElement('br'),
+      React.createElement('span',{style:{fontSize:10,color:'#bbb'}},'Données indicatives — v2026.1')
+    )
+  );
+}
+
+ReactDOM.render(React.createElement(App), document.getElementById('root'));
+</script>
+</body>
+</html>

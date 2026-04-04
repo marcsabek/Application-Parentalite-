@@ -1,0 +1,19 @@
+{
+  "name": "Libéral(e) & Parent — Guide Parentalité 2026",
+  "short_name": "Libéral(e) & Parent",
+  "description": "Simulateur de prestations parentalité pour chirurgiens-dentistes libéraux — CDS+",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#1a2744",
+  "theme_color": "#1a2744",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='96' fill='%231a2744'/><text x='256' y='340' text-anchor='middle' font-size='260' fill='white'>👶</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
