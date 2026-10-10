@@ -1,0 +1,3 @@
+music.wav — composition originale générée par synthèse logicielle (tools/make_music.py).
+Aucun échantillon, aucune boucle ni œuvre tierce n'est utilisé : aucun droit d'auteur
+ni licence tierce n'est à acquérir pour sa diffusion.

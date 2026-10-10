@@ -25,8 +25,8 @@ FRAMES = {
 }
 LOGO_BOX = (0.0, 0.0, 0.32, 0.33)
 PORTRAITS = {
-    "gardon": "src/gardon_2.jpg",
-    "sabek": "src/sabek.jpg",
+    "gardon": "portraits/gardon_2.jpg",
+    "sabek": "portraits/sabek.jpg",
 }
 # désaturation des cheveux (reflets verts du feuillage sur la photo du Dr Sabek)
 HAIR_DESAT = {"sabek": 0.75}
