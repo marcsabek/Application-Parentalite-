@@ -14,7 +14,7 @@ export const SESSION = {
   code: "E117" as string | null,
   day: "Samedi 28 novembre" as string | null,
   time: "9 h 00" as string | null,
-  room: null as string | null,
+  room: "Amphithéâtre Bordeaux" as string | null,
 };
 
 export const CONGRESS = {

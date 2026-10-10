@@ -38,7 +38,7 @@ export const Scene6Moment: React.FC = () => {
             <Field value={SESSION.day} label="JOUR" /> · <Field value={SESSION.time} label="HEURE" />
           </div>
           <div style={small}>
-            Salle <Field value={SESSION.room} label="SALLE" />
+            <Field value={SESSION.room} label="SALLE" />
           </div>
         </div>
       </AbsoluteFill>
