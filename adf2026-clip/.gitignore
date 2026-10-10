@@ -1,0 +1,10 @@
+node_modules/
+out/
+# Kit ADF, portraits et rendus : droit à l'image et marque — hors dépôt
+public/assets/adf/
+public/assets/src/
+public/assets/portraits/
+public/assets/composites/
+public/assets/audio/*.wav
+public/assets/audio/*.mp3
+*.mp4
